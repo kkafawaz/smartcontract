@@ -1,5 +1,3 @@
-// Solidity program to demonstrate
-// how to create a contract
 pragma solidity ^0.4.23;
 
 // Creating a contract
