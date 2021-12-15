@@ -1,78 +1,53 @@
-// Solidity program to demonstrate
-// visibility modifiers
-pragma solidity ^0.5.0;
+import time
+import json
+import web3
+from eth_account import Account
+from web3.auto import w3
+from web3.providers.websocket import WebsocketProvider
+from web3 import Web3
+from solc import compile_standard
 
-// Creating a contract
-contract contract_example {
+with open("contract.sol") as c:
+ contractText=c.read()
+with open(".pk") as pkfile:
+ privateKey=pkfile.read()
+with open(".infura") as infurafile:
+ infuraKey=infurafile.read()
 
-// Declaring private
-// state variable
-uint private num1;
-	
-// Declaring public
-// state variable
-uint public num2;
+compiled_sol = compile_standard({
+ "language": "Solidity",
+ "sources": {
+  "Greeter.sol": {
+   "content": contractText
+  }
+ },
+ "settings":
+ {
+  "outputSelection": {
+   "*": {
+    "*": [
+     "metadata", "evm.bytecode"
+     , "evm.bytecode.sourceMap"
+    ]
+   }
+  }
+ }
+})
+bytecode = compiled_sol['contracts']['Greeter.sol']['Greeter']['evm']['bytecode']['object']
+abi = json.loads(compiled_sol['contracts']['Greeter.sol']['Greeter']['metadata'])['output']['abi']
+W3 = Web3(WebsocketProvider('wss://ropsten.infura.io/ws/v3/%s'%infuraKey))
+account1=Account.from_key(privateKey);
+address1=account1.address
+Greeter = W3.eth.contract(abi=abi, bytecode=bytecode)
 
-// Declaring Internal
-// state variable
-string internal str;
-
-// Defining a constructor
-constructor() public {
-	num2 = 10;
-}
-
-// Defining a private function
-function increment(
-	uint data1) private pure returns(
-	uint) { return data1 + 1; }
-	
-// Defining public functions
-function updateValue(
-	uint data1) public { num1 = data1; }
-function getValue(
-) public view returns(
-	uint) { return num1; }
-
-// Declaring public functions
-function setStr(
-	string memory _str) public;
-function getStr(
-) public returns (string memory);
-}
-
-// Child contract inheriting
-// from the parent contract
-// 'contract_example'
-contract derived_contract is contract_example{
-
-// Defining public function of
-// parent contract
-function setStr(
-	string memory _str) public{
-str = _str;
-}
-
-// Defining public function
-// of parent contract
-function getStr(
-) public returns (
-	string memory){ return str; }
-}
-
-//External Contract
-contract D {
-
-// Defining a public function to create
-// an object of child contract access the
-// functions from child and parent contract
-function readData(
-) public payable returns(
-	string memory, uint) {
-	contract_example c
-		= new derived_contract();
-	c.setStr("GeeksForGeeks");
-	c.updateValue(16);		
-	return (c.getStr(), c.getValue());
-}
-}
+nonce = W3.eth.getTransactionCount(address1)
+#diagnostics
+#print(nonce)
+# Submit the transaction that deploys the contract
+tx_dict = Greeter.constructor().buildTransaction({
+'chainId': 3,
+'gas': 1400000,
+'gasPrice': w3.toWei('40', 'gwei'),
+'nonce': nonce,
+'from':address1
+})
