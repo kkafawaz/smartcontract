@@ -51,3 +51,22 @@ tx_dict = Greeter.constructor().buildTransaction({
 'nonce': nonce,
 'from':address1
 })
+signed_txn = W3.eth.account.sign_transaction(tx_dict, private_key=privateKey)
+result = W3.eth.sendRawTransaction(signed_txn.rawTransaction)
+tx_receipt = None#W3.eth.getTransactionReceipt(result)
+
+count = 0
+while tx_receipt is None and (count < 300):
+  time.sleep(1)
+  try:
+    tx_receipt = W3.eth.getTransactionReceipt(result)
+  except:
+    print('.')
+
+if tx_receipt is None:
+  print (" {'status': 'failed', 'error': 'timeout'} ")
+
+#tx_hash = greeter.functions.setGreeting('Nihao').transact({"from":account1.address})
+#tx_receipt = w3.eth.waitForTransactionReceipt(tx_hash)
+print("Output from balanceOf()")
+print(greeter.functions.balanceOf("0x77bf401b369Ce1383900dFa004A558D7CeF8B615").call())
